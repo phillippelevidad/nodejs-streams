@@ -1,8 +1,13 @@
 // Run this file first. It will generate a file with random order data.
+// -----
+
 import DraftLog from "draftlog";
 import Event from "events";
+import fs from "fs";
 import { performance } from "perf_hooks";
+import { pipeline } from "stream/promises";
 import { faker } from "@faker-js/faker";
+import { stringify } from "ndjson";
 import { config } from "./config.js";
 
 const startTime = performance.now();
@@ -13,6 +18,7 @@ const parameters = {
   numberOfOrders: 1_000,
 };
 
+// Generate a pool of customers
 const customers = [];
 while (customers.length < parameters.numberOfCustomers) {
   const customer = faker.person.fullName();
@@ -20,6 +26,7 @@ while (customers.length < parameters.numberOfCustomers) {
   customers.push(customer);
 }
 
+// Generate a pool of categories
 const categories = [];
 while (categories.length < parameters.numberOfCategories) {
   const category = faker.commerce.department();
@@ -27,6 +34,7 @@ while (categories.length < parameters.numberOfCategories) {
   categories.push(category);
 }
 
+// Create an Event for reporting progress
 const progress = new Event();
 DraftLog(console).addLineListener(process.stdin);
 const print = console.draft("Initializing...");
@@ -42,6 +50,9 @@ progress.on("update", ({ ordersCount }) => {
   }
 });
 
+// Generate orders using a generator function
+// The fact that it's a generator function helps peformance
+// because it doesn't need to keep all orders in memory
 async function* generateOrders() {
   for (let i = 0; i < parameters.numberOfOrders; i++) {
     const items = [];
@@ -75,18 +86,18 @@ async function* generateOrders() {
 }
 
 // Create data folder if not exists
-import fs from "fs";
 if (!fs.existsSync(config.DATA_FOLDER)) {
   fs.mkdirSync(config.DATA_FOLDER);
 }
 
-// Write orders to file using Node.js streams
-import { pipeline } from "stream/promises";
-import { stringify } from "ndjson";
-import { createWriteStream } from "fs";
-
-const output = createWriteStream(config.ORDERS_FILE);
+// Other steps of the processing pipeline
 const serialize = stringify();
+const output = fs.createWriteStream(config.ORDERS_FILE);
+
+// Create a pipeline that will generate orders, serialize them to NDJSON
+// and write them to the output file. This is a very efficient way of
+// processing large amounts of data. Each order is processed as soon as
+// it's generated, without having to accumulate all orders in memory.
 await pipeline(generateOrders, serialize, output);
 
 const endTime = performance.now();
