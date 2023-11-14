@@ -1,0 +1,22 @@
+{
+  "name": "@phillcode/nodejs-streams",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "data": "node src/1.generateData.js",
+    "report": "node src/2.generateReport.js"
+  },
+  "keywords": [],
+  "author": "Phillippe Santana",
+  "license": "ISC",
+  "devDependencies": {
+    "@faker-js/faker": "^8.2.0"
+  },
+  "dependencies": {
+    "draftlog": "^1.0.13",
+    "ndjson": "^2.0.0",
+    "split2": "^4.2.0"
+  }
+}
