@@ -10,13 +10,19 @@ import { faker } from "@faker-js/faker";
 import { stringify } from "ndjson";
 import { config } from "./config.js";
 
-const startTime = performance.now();
-
 const parameters = {
   numberOfCustomers: 1_000,
   numberOfCategories: 10,
-  numberOfOrders: 1_000,
+  numberOfProducts: 100,
+  numberOfOrders: 1_000_000,
 };
+
+const startTime = performance.now();
+
+// Create data folder if not exists
+if (!fs.existsSync(config.DATA_FOLDER)) {
+  fs.mkdirSync(config.DATA_FOLDER);
+}
 
 // Generate a pool of customers
 const customers = [];
@@ -34,7 +40,15 @@ while (categories.length < parameters.numberOfCategories) {
   categories.push(category);
 }
 
-// Create an Event for reporting progress
+// Generate a pool of products
+const products = [];
+while (products.length < parameters.numberOfProducts) {
+  const product = faker.commerce.productName();
+  if (products.includes(product)) continue;
+  products.push(product);
+}
+
+// Use an Event for reporting progress
 const progress = new Event();
 DraftLog(console).addLineListener(process.stdin);
 const print = console.draft("Initializing...");
@@ -56,13 +70,13 @@ progress.on("update", ({ ordersCount }) => {
 async function* generateOrders() {
   for (let i = 0; i < parameters.numberOfOrders; i++) {
     const items = [];
-    const numberOfItems = Math.floor(Math.random() * 3) + 1;
+    const numberOfItems = getRandom(1, 3);
     for (let i = 0; i < numberOfItems; i++) {
       const item = {
-        product: faker.commerce.productName(),
-        quantity: Math.floor(Math.random() * 5) + 1,
-        unitPrice: Number(faker.commerce.price()),
-        category: categories[Math.floor(Math.random() * categories.length)],
+        product: products[getRandom(0, products.length - 1)],
+        quantity: getRandom(1, 5),
+        unitPrice: getRandom(100, 600),
+        category: categories[getRandom(0, categories.length - 1)],
       };
       items.push(item);
     }
@@ -73,7 +87,7 @@ async function* generateOrders() {
     );
 
     const order = {
-      customer: customers[Math.floor(Math.random() * customers.length)],
+      customer: customers[getRandom(0, customers.length - 1)],
       date: faker.date.past(),
       orderTotal,
       items,
@@ -83,11 +97,6 @@ async function* generateOrders() {
 
     yield order;
   }
-}
-
-// Create data folder if not exists
-if (!fs.existsSync(config.DATA_FOLDER)) {
-  fs.mkdirSync(config.DATA_FOLDER);
 }
 
 // Other steps of the processing pipeline
@@ -103,3 +112,7 @@ await pipeline(generateOrders, serialize, output);
 const endTime = performance.now();
 console.log(`Time taken: ${((endTime - startTime) / 1000).toFixed(2)}s`);
 process.exit(0);
+
+function getRandom(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}

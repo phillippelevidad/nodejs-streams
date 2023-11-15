@@ -7,7 +7,7 @@ This demo project is designed as a learning tool for understanding and utilizing
 1. **Data Generation**: Utilizing streams to generate a large data file efficiently.
 1. **Report Generation**: Demonstrating how to process data and generate a report without consuming excessive memory.
 
-Both applications should run in a matter of seconds and be very memory efficient. On my machine, the Data Generation app took about 19s seconds to generate 1M lines into a ~280mb file, and the Report Generation app took under 3s to generate an aggregated report from the generated file.
+Both applications should run in a matter of seconds and be very memory efficient. On my machine, the Data Generation app took about 14s seconds to generate 1M lines into a ~280mb file, and the Report Generation app took under 3s to generate an aggregated report from the generated file.
 
 The project is structured with simplicity and clarity in mind, making it ideal for exploring Node.js' stream processing. Each app serves a specific purpose in the demonstration of stream capabilities.
 
